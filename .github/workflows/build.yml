@@ -1,0 +1,40 @@
+name: Build KAKARA APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Create buildozer.spec
+      run: |
+        cat << 'EOF' > buildozer.spec
+        [app]
+        title = KAKARA
+        package.name = kakara
+        package.domain = org.khoaz1003
+        source.dir = .
+        source.include_exts = py,png,jpg,kv,atlas,ico
+        version = 1.1
+        requirements = python3,kivy,yt-dlp,requests,urllib3,certifi,idna
+        orientation = landscape
+        osx.kivy_version = 2.1.0
+        fullscreen = 1
+        android.permissions = INTERNET, RECORD_AUDIO, MODIFY_AUDIO_SETTINGS
+        android.api = 31
+        android.minapi = 21
+        android.ndk_api = 21
+        android.private_storage = True
+        android.entrypoint = main.py
+        
+        [buildozer]
+        log_level = 2
+        warn_on_root = 1
+        EOF
+
+    - name: Build with Buildozer
+      uses: ArtemGovorov/buildozer-action@v1
+      with:
+        command: buildozer android debug
+        buildozer_version: master
