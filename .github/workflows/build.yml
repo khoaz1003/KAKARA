@@ -3,9 +3,20 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libssl-dev cmake libffi-dev libltdl-dev
+        pip install --user --upgrade buildozer cython virtualenv Kivy
 
     - name: Create buildozer.spec
       run: |
@@ -19,9 +30,8 @@ jobs:
         version = 1.1
         requirements = python3,kivy,yt-dlp,requests,urllib3,certifi,idna
         orientation = landscape
-        osx.kivy_version = 2.1.0
         fullscreen = 1
-        android.permissions = INTERNET, RECORD_AUDIO, MODIFY_AUDIO_SETTINGS
+        android.permissions = INTERNET
         android.api = 31
         android.minapi = 21
         android.ndk_api = 21
@@ -33,8 +43,12 @@ jobs:
         warn_on_root = 1
         EOF
 
-    - name: Build with Buildozer
-      uses: ArtemGovorov/buildozer-action@v1
+    - name: Build APK with Buildozer
+      run: |
+        yes | ~/.local/bin/buildozer -v android debug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v3
       with:
-        command: buildozer android debug
-        buildozer_version: master
+        name: KAKARA-APK
+        path: bin/*.apk
